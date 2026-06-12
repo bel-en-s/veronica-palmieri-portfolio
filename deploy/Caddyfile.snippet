@@ -1,0 +1,11 @@
+# Agregar este bloque a tu Caddyfile existente.
+# Cloudflare Tunnel termina TLS, así que Caddy escucha solo HTTP (sin auto-cert).
+# Por eso usamos http:// explícito en la dirección del sitio.
+
+http://YOUR_DOMAIN.com {
+    encode gzip zstd
+    reverse_proxy vero-palmieri-portfolio:8090
+
+        output file /var/log/caddy/vero-palmieri-portfolio.log
+    }
+}
