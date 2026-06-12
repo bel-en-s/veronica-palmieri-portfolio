@@ -221,6 +221,8 @@ func adminSectionNewSubmit(e *core.RequestEvent, app *pocketbase.PocketBase) err
 	rec.Set("description_en", sanitize.HTML(f.DescriptionEN))
 	rec.Set("sort_order", f.SortOrder)
 	rec.Set("active", f.Active)
+	rec.Set("text_align", f.TextAlign)
+	rec.Set("columns", f.Columns)
 	if files := uploadedFile(e.Request, "cover_image", "image/"); files != nil {
 		rec.Set("cover_image", files)
 	}
@@ -251,6 +253,8 @@ func adminSectionEditView(e *core.RequestEvent, app *pocketbase.PocketBase) erro
 		DescriptionEN: rec.GetString("description_en"),
 		SortOrder:     rec.GetInt("sort_order"),
 		Active:        rec.GetBool("active"),
+		TextAlign:     rec.GetString("text_align"),
+		Columns:       rec.GetString("columns"),
 	}
 	if cover := rec.GetString("cover_image"); cover != "" {
 		f.CoverURL = "/api/files/sections/" + rec.Id + "/" + cover
@@ -289,7 +293,11 @@ func adminSectionEditSubmit(e *core.RequestEvent, app *pocketbase.PocketBase) er
 	rec.Set("description_en", sanitize.HTML(f.DescriptionEN))
 	rec.Set("sort_order", f.SortOrder)
 	rec.Set("active", f.Active)
-	if files := uploadedFile(e.Request, "cover_image", "image/"); files != nil {
+	rec.Set("text_align", f.TextAlign)
+	rec.Set("columns", f.Columns)
+	if e.Request.PostFormValue("cover_image_delete") == "1" {
+		rec.Set("cover_image", nil)
+	} else if files := uploadedFile(e.Request, "cover_image", "image/"); files != nil {
 		rec.Set("cover_image", files)
 	}
 	if err := app.Save(rec); err != nil {
@@ -1085,6 +1093,8 @@ func readSectionForm(r *http.Request, isNew bool) views.AdminSectionForm {
 		DescriptionEN: r.PostFormValue("description_en"),
 		SortOrder:     order,
 		Active:        r.PostFormValue("active") == "1",
+		TextAlign:     r.PostFormValue("text_align"),
+		Columns:       r.PostFormValue("columns"),
 	}
 }
 

@@ -210,17 +210,6 @@ templ AdminSectionFormPage(email string, f AdminSectionForm) {
 					<input type="text" name="slug" value={ f.Slug } required class="w-full border rounded-lg px-3 py-2"/>
 					<p class="text-xs text-gray-400 mt-1">URL amigable. Ej: "teatro", "performance", "cine"</p>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-1">Descripción (ES)</label>
-						<textarea name="description" rows="3" class="w-full border rounded-lg px-3 py-2">{ f.Description }</textarea>
-					</div>
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-1">Description (EN)</label>
-						<textarea name="description_en" rows="3" class="w-full border rounded-lg px-3 py-2">{ f.DescriptionEN }</textarea>
-						<p class="text-xs text-gray-400 mt-1">Si dejás EN vacío, se usa el ES.</p>
-					</div>
-				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1">Orden</label>
 					<input type="number" name="sort_order" value={ fmt.Sprintf("%d", f.SortOrder) } class="w-32 border rounded-lg px-3 py-2"/>
@@ -233,10 +222,67 @@ templ AdminSectionFormPage(email string, f AdminSectionForm) {
 					/>
 					<label for="active" class="text-sm">Activa (visible en el sitio)</label>
 				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">Alineación del texto</label>
+						<select name="text_align" class="w-full border rounded-lg px-3 py-2">
+							<option value="left"
+								if f.TextAlign == "left" || f.TextAlign == "" {
+									selected
+								}
+							>Izquierda</option>
+							<option value="center"
+								if f.TextAlign == "center" {
+									selected
+								}
+							>Centro</option>
+							<option value="right"
+								if f.TextAlign == "right" {
+									selected
+								}
+							>Derecha</option>
+							<option value="justify"
+								if f.TextAlign == "justify" {
+									selected
+								}
+							>Justificado</option>
+						</select>
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">Columnas</label>
+						<select name="columns" class="w-full border rounded-lg px-3 py-2">
+							<option value="2"
+								if f.Columns == "2" || f.Columns == "" {
+									selected
+								}
+							>Dos columnas</option>
+							<option value="1"
+								if f.Columns == "1" {
+									selected
+								}
+							>Una columna</option>
+						</select>
+						<p class="text-xs text-gray-400 mt-1">En mobile siempre se ve una columna.</p>
+					</div>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">Descripción (ES)</label>
+						<div id="quill-es" style="min-height:200px" class="border rounded-lg">@templ.Raw(f.Description)</div>
+						<textarea name="description" id="desc-es" style="display:none">{ f.Description }</textarea>
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">Description (EN)</label>
+						<div id="quill-en" style="min-height:200px" class="border rounded-lg">@templ.Raw(f.DescriptionEN)</div>
+						<textarea name="description_en" id="desc-en" style="display:none">{ f.DescriptionEN }</textarea>
+						<p class="text-xs text-gray-400 mt-1">Si dejás EN vacío, se usa el ES.</p>
+					</div>
+				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1">Imagen de portada</label>
 					if f.CoverURL != "" {
 						<img src={ f.CoverURL } class="w-32 h-32 object-cover rounded mb-2" alt="cover"/>
+						<p class="text-xs text-gray-500 mt-1"><label class="inline-flex items-center gap-1"><input type="checkbox" name="cover_image_delete" value="1"/> borrar imagen</label></p>
 					}
 					<input type="file" name="cover_image" accept="image/*" class="text-sm"/>
 				</div>
@@ -255,6 +301,27 @@ templ AdminSectionFormPage(email string, f AdminSectionForm) {
 					}
 				</div>
 			</form>
+			<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+			<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet"/>
+			<script>
+				function initQuill(containerId, taId) {
+					var container = document.getElementById(containerId);
+					if (!container) return;
+					var ta = document.getElementById(taId);
+					var quill = new Quill(container, {
+						theme: 'snow',
+						modules: {
+							toolbar: [['bold','italic','underline','strike'],[{'list':'ordered'},{'list':'bullet'}],['clean']]
+						}
+					});
+					var form = container.closest('form');
+					form.addEventListener('submit', function() {
+						ta.value = quill.root.innerHTML;
+					});
+				}
+				initQuill('quill-es', 'desc-es');
+				initQuill('quill-en', 'desc-en');
+			</script>
 		</div>
 	}
 }

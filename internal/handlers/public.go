@@ -60,6 +60,8 @@ type pubSection struct {
 	Slug        string
 	Description template.HTML
 	CoverURL    string
+	TextAlign   string
+	Columns     string
 	Works       []pubWork
 }
 
@@ -199,6 +201,8 @@ func loadPubSite(app *pocketbase.PocketBase, locale string) (*pubSite, error) {
 			Name:        tr(sec, locale, "name"),
 			Slug:        sec.GetString("slug"),
 			Description: safeHTML(tr(sec, locale, "description")),
+			TextAlign:   sec.GetString("text_align"),
+			Columns:     sec.GetString("columns"),
 		}
 		if cov := sec.GetString("cover_image"); cov != "" {
 			ps.CoverURL = fileURL("sections", sec.Id, cov)
@@ -380,7 +384,7 @@ const publicHTML = `<!DOCTYPE html>
     font-weight:350;line-height:1.6;
     -webkit-font-smoothing:antialiased;
   }
-  a{color:inherit;text-decoration:none;border-bottom:1px solid var(--line);transition:border-color .2s}
+  a{color:inherit;text-decoration:none;transition:border-color .2s}
   a:hover{border-color:var(--ink)}
   .wrap{max-width:var(--max);margin:0 auto;padding:0 1.5rem}
 
@@ -400,7 +404,7 @@ const publicHTML = `<!DOCTYPE html>
   .nav-link[data-k="textos"]:hover{color:#10B981}           /* verde */
   .nav-link[data-k="press"]:hover{color:#F59E0B}            /* ámbar */
   .nav-link[data-k="contacto"]:hover{color:#111}
-  .site-title:hover{color:inherit !important;font-variation-settings:'wght' 700 !important}
+  .site-title:hover{color:inherit !important;  border-bottom: none;font-variation-settings:'wght' 700 !important}
 
   /* Hero */
   .hero{padding:5rem 0 3rem}
@@ -467,6 +471,7 @@ const publicHTML = `<!DOCTYPE html>
   /* Work list */
   .works{display:grid;grid-template-columns:1fr;gap:2.5rem}
   @media(min-width:720px){.works{grid-template-columns:1fr 1fr}}
+  @media(min-width:720px){.works.cols-1{grid-template-columns:1fr}}
   .work{padding-bottom:2rem;border-bottom:1px solid var(--line)}
   .work .year{font-style:italic;color:var(--muted);font-size:.95rem;letter-spacing:.02em}
   .work h3{font-weight:700;font-size:1.4rem;line-height:1.2;margin:.3rem 0 .5rem}
@@ -527,7 +532,7 @@ const publicHTML = `<!DOCTYPE html>
   /* Bio */
   .bio{display:grid;grid-template-columns:1fr;gap:2rem;align-items:start}
   @media(min-width:820px){.bio{grid-template-columns:1fr 2fr}}
-  .bio .text p{margin-bottom:.9rem;font-size:.98rem}
+  .bio .text{white-space:pre-line}.bio .text p{margin-bottom:.9rem;font-size:.98rem}
   .bio .text a{border-bottom:1px solid var(--line)}
   .contact p{margin-bottom:.4rem;font-size:.95rem}
   .contact .label{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-size:.75rem;margin-top:1rem}
@@ -647,12 +652,12 @@ const publicHTML = `<!DOCTYPE html>
 
 
 
-  {{range .Sections}}
+  {{range .Sections}}{{$ta := .TextAlign}}{{$cols := .Columns}}
   <section class="page" id="{{.Slug}}">
     <h2>{{.Name}}</h2>
     {{if .CoverURL}}<figure class="section-cover" style="margin:0 0 2rem;border:1px solid var(--line)"><img src="{{.CoverURL}}" alt="{{.Name}}" style="display:block;width:100%;height:auto;max-height:50vh;object-fit:cover"></figure>{{end}}
-    {{if .Description}}<div class="section-desc" style="font-size:1.05rem;color:var(--muted);max-width:720px;margin:0 0 2.2rem">{{.Description}}</div>{{end}}
-    <div class="works">
+    {{if .Description}}<div class="section-desc" style="font-size:1.05rem;color:var(--muted);max-width:720px;margin:0 0 2.2rem{{if eq $ta "center"}};text-align:center{{else if eq $ta "right"}};text-align:right{{else if eq $ta "justify"}};text-align:justify{{end}}">{{.Description}}</div>{{end}}
+    <div class="works{{if eq $cols "1"}} cols-1{{end}}">
       {{range .Works}}
       <article class="work">
         {{if .Year}}<div class="year">{{.Year}}</div>{{end}}

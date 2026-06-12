@@ -21,6 +21,8 @@ type AdminSectionForm struct {
 	DescriptionEN string
 	SortOrder     int
 	Active        bool
+	TextAlign     string
+	Columns       string
 	CoverURL      string
 	Error         string
 }
