@@ -21,6 +21,12 @@ func safeHTML(s string) template.HTML {
 	return template.HTML(sanitize.HTML(s))
 }
 
+// hasVisibleText chequea si un string HTML tiene contenido textual visible.
+var stripTags = regexp.MustCompile(`<[^>]*>`)
+func hasVisibleText(s string) bool {
+	return strings.TrimSpace(stripTags.ReplaceAllString(s, "")) != ""
+}
+
 var yearRe = regexp.MustCompile(`\d{4}`)
 
 // latestYear extrae todos los años (4 dígitos) y devuelve el mayor.
@@ -197,12 +203,16 @@ func loadPubSite(app *pocketbase.PocketBase, locale string) (*pubSite, error) {
 	}
 
 	for _, sec := range sections {
+		rawDesc := tr(sec, locale, "description")
 		ps := pubSection{
 			Name:        tr(sec, locale, "name"),
 			Slug:        sec.GetString("slug"),
-			Description: safeHTML(tr(sec, locale, "description")),
+			Description: safeHTML(rawDesc),
 			TextAlign:   sec.GetString("text_align"),
 			Columns:     sec.GetString("columns"),
+		}
+		if !hasVisibleText(rawDesc) {
+			ps.Description = ""
 		}
 		if cov := sec.GetString("cover_image"); cov != "" {
 			ps.CoverURL = fileURL("sections", sec.Id, cov)
@@ -254,12 +264,17 @@ func loadPubSite(app *pocketbase.PocketBase, locale string) (*pubSite, error) {
 	press, err := app.FindRecordsByFilter("press", "active = true", "+sort_order", 100, 0)
 	if err == nil {
 		for _, p := range press {
+			rawExcerpt := tr(p, locale, "excerpt")
+			excerpt := safeHTML(rawExcerpt)
+			if !hasVisibleText(rawExcerpt) {
+				excerpt = ""
+			}
 			site.Press = append(site.Press, pubPress{
 				Title:       tr(p, locale, "title"),
 				Publication: p.GetString("publication"),
 				URL:         p.GetString("url"),
 				Date:        p.GetString("date"),
-				Excerpt:     safeHTML(tr(p, locale, "excerpt")),
+				Excerpt:     excerpt,
 			})
 		}
 	}
@@ -354,15 +369,14 @@ const publicHTML = `<!DOCTYPE html>
 {{if .OGImageURL}}<meta name="twitter:image" content="{{.OGImageURL}}">{{end}}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@100..900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
     theme: {
       extend: {
-        fontFamily: { display: ['Playfair Display', 'Georgia', 'serif'], sans: ['Inter', 'system-ui', 'sans-serif'] },
+        fontFamily: { display: ['Inter', 'system-ui', 'sans-serif'], sans: ['Inter', 'system-ui', 'sans-serif'] },
         colors: { ink: '#111111', muted: '#6a6a6a', line: '#e6e6e6' },
-        screens: { nav: '1080px' },
       },
     },
   };
@@ -380,36 +394,26 @@ const publicHTML = `<!DOCTYPE html>
   html{scroll-behavior:smooth}
   body{
     background:var(--bg);color:var(--ink);
-    font-family:'Playfair Display',Georgia,serif;
-    font-weight:350;line-height:1.6;
+    font-family:'Inter',system-ui,sans-serif;
+    font-weight:300;line-height:1.6;
     -webkit-font-smoothing:antialiased;
   }
   a{color:inherit;text-decoration:none;transition:border-color .2s}
   a:hover{border-color:var(--ink)}
   .wrap{max-width:var(--max);margin:0 auto;padding:0 1.5rem}
 
-  /* Nav links — colores por sección (tomados del InDesign/PDF) */
+  /* Nav links */
   .nav-link{
     border:none !important;
     font-variation-settings:'wght' 400;
-    transition:color .25s ease, font-variation-settings .25s ease, letter-spacing .25s ease;
+    transition:color .25s ease, font-variation-settings .25s ease;
   }
   .nav-link:hover{
-    color:#6a6a6a;
-    font-variation-settings:'wght' 650;
+    font-variation-settings:'wght' 700;
   }
-  .nav-link[data-k="bio"]:hover{color:#8B5CF6}              /* violeta */
-  .nav-link[data-k="pinturas"]:hover{color:#EC4899}         /* rosa */
-  .nav-link[data-k="muestras"]:hover{color:#3B82F6}         /* azul */
-  .nav-link[data-k="textos"]:hover{color:#10B981}           /* verde */
-  .nav-link[data-k="press"]:hover{color:#F59E0B}            /* ámbar */
-  .nav-link[data-k="contacto"]:hover{color:#111}
-  .site-title:hover{color:inherit !important;  border-bottom: none;font-variation-settings:'wght' 700 !important}
 
   /* Hero */
-  .hero{padding:5rem 0 3rem}
-  .hero h1{font-weight:700;font-size:clamp(2rem,5vw,3.5rem);line-height:1.05;letter-spacing:-.01em}
-  .hero .tag{font-style:italic;font-weight:300;color:var(--muted);margin-top:1rem;font-size:1.3rem}
+  .hero{padding:1.5rem 0 2rem}
   .hero .cover{margin-top:2.5rem;border:1px solid var(--line)}
   .hero .cover img{display:block;width:100%;height:auto;max-height:72vh;object-fit:cover}
 
@@ -458,23 +462,21 @@ const publicHTML = `<!DOCTYPE html>
   }
 
   /* Section */
-  section.page{padding:4rem 0 2rem;border-top:1px solid var(--line)}
+  section.page{padding:0 0 2rem}
   section.page h2{
-    font-family:'Playfair Display',Georgia,serif;
-    font-weight:600;font-size:clamp(1.5rem,3vw,2.2rem);letter-spacing:-.005em;
-    margin-bottom:2rem;
+    font-family:'Inter',system-ui,sans-serif;
+    font-weight:300;font-size:clamp(1rem,2vw,1.3rem);letter-spacing:.08em;
+    margin-bottom:1.5rem;text-decoration:underline;text-underline-offset:6px;
   }
-  section.page h2::after{
-    content:"";display:block;width:48px;height:3px;background:var(--ink);margin-top:.6rem;
-  }
+  section.page h2{text-transform:uppercase}
 
   /* Work list */
   .works{display:grid;grid-template-columns:1fr;gap:2.5rem}
   @media(min-width:720px){.works{grid-template-columns:1fr 1fr}}
   @media(min-width:720px){.works.cols-1{grid-template-columns:1fr}}
-  .work{padding-bottom:2rem;border-bottom:1px solid var(--line)}
-  .work .year{font-style:italic;color:var(--muted);font-size:.95rem;letter-spacing:.02em}
-  .work h3{font-weight:700;font-size:1.4rem;line-height:1.2;margin:.3rem 0 .5rem}
+  .work{padding-bottom:1rem}
+  .work .year{font-style:italic;color:var(--muted);font-size:.8rem;text-align:right;letter-spacing:.02em;margin-top:.15rem}
+  .work h3,.work-title{font-style:italic;font-weight:300;font-size:1rem;line-height:1.3;margin:.6rem 0 .1rem;text-align:right}
   .work .role{font-size:.9rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.7rem}
   .work .desc{font-size:.97rem;margin-bottom:.6rem}
   .work .credits{font-size:.86rem;color:var(--muted);margin-bottom:.6rem}
@@ -552,29 +554,28 @@ const publicHTML = `<!DOCTYPE html>
 
 <nav class="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-line font-sans">
   <div class="max-w-[1100px] mx-auto px-6 flex items-center justify-between h-14">
-    <a href="#top" class="site-title font-bold tracking-wide text-ink font-display text-lg">{{.SiteName}}</a>
+    <a href="#top" class="shrink-0 font-display text-lg font-light text-ink no-underline">{{.SiteName}}</a>
 
-    <!-- Desktop links -->
-    <ul class="hidden nav:flex items-center gap-6 list-none">
+    <ul class="hidden md:flex items-center justify-center gap-6 list-none">
       <li><a data-k="bio" class="nav-link text-[0.78rem] tracking-[0.05em] lowercase text-ink" href="#bio">{{.T.bio}}</a></li>
       {{range .Sections}}<li><a data-k="{{.Slug}}" class="nav-link text-[0.78rem] tracking-[0.05em] lowercase text-ink" href="#{{.Slug}}">{{.Name}}</a></li>{{end}}
       {{if .Press}}<li><a data-k="press" class="nav-link text-[0.78rem] tracking-[0.05em] lowercase text-ink" href="#press">{{.T.notes}}</a></li>{{end}}
       <li><a data-k="contacto" class="nav-link text-[0.78rem] tracking-[0.05em] lowercase text-ink" href="#contacto">{{.T.contact}}</a></li>
-      <li><a href="{{.OtherURL}}" title="{{.T.toggle_title}}" class="nav-link text-[0.78rem] tracking-[0.14em] uppercase border border-line px-2 py-1 rounded">{{if eq .Locale "es"}}EN{{else}}ES{{end}}</a></li>
     </ul>
 
-    <!-- Mobile burger -->
-    <button id="nav-toggle" aria-label="Menu" aria-expanded="false"
-      class="nav:hidden inline-flex items-center justify-center w-10 h-10 -mr-2 text-ink">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
-    </button>
+    <div class="flex items-center gap-2 shrink-0">
+      <button id="nav-toggle" aria-label="Menu" aria-expanded="false"
+        class="md:hidden inline-flex items-center justify-center w-9 h-9 text-ink">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <a href="{{.OtherURL}}" title="{{.T.toggle_title}}" class="text-[0.78rem] tracking-[0.14em] uppercase text-ink">{{if eq .Locale "es"}}EN{{else}}ES{{end}}</a>
+    </div>
   </div>
-
 </nav>
 
-<!-- Mobile full-screen overlay (outside <nav> so it can cover everything) -->
+<!-- Mobile full-screen overlay -->
 <div id="nav-panel"
-  class="fixed inset-0 z-30 bg-white opacity-0 pointer-events-none transition-opacity duration-300 ease-out nav:hidden">
+  class="fixed inset-0 z-30 bg-white opacity-0 pointer-events-none transition-opacity duration-300 ease-out md:hidden">
   <button id="nav-close" aria-label="Cerrar"
     class="absolute top-3 right-4 w-10 h-10 inline-flex items-center justify-center text-ink">
     <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
@@ -584,7 +585,6 @@ const publicHTML = `<!DOCTYPE html>
     {{range .Sections}}<li><a data-k="{{.Slug}}" class="nav-link text-2xl tracking-[0.05em] lowercase text-ink" href="#{{.Slug}}">{{.Name}}</a></li>{{end}}
     {{if .Press}}<li><a data-k="press" class="nav-link text-2xl tracking-[0.05em] lowercase text-ink" href="#press">{{.T.notes}}</a></li>{{end}}
     <li><a data-k="contacto" class="nav-link text-2xl tracking-[0.05em] lowercase text-ink" href="#contacto">{{.T.contact}}</a></li>
-    <li><a href="{{.OtherURL}}" class="nav-link text-xl tracking-[0.2em] uppercase text-ink border border-line px-3 py-1 rounded">{{if eq .Locale "es"}}EN{{else}}ES{{end}}</a></li>
   </ul>
 </div>
 <script>
@@ -618,10 +618,7 @@ const publicHTML = `<!DOCTYPE html>
 <main class="wrap">
 
   <header class="hero" id="top">
-<!--
-    <h1>{{.SiteName}}</h1>
-    <div class="tag">{{.Tagline}}</div>
--->
+    <img src="/static/img/logo.png" alt="Veronica Palmieri" class="h-12 w-auto mx-auto">
     {{if .HeroURL}}
     <figure class="cover glitch" id="hero-glitch">
       <img class="g-base" src="{{.HeroURL}}" alt="{{.SiteName}}">
@@ -660,8 +657,6 @@ const publicHTML = `<!DOCTYPE html>
     <div class="works{{if eq $cols "1"}} cols-1{{end}}">
       {{range .Works}}
       <article class="work">
-        {{if .Year}}<div class="year">{{.Year}}</div>{{end}}
-        <h3>{{.Title}}</h3>
         {{if .Role}}<div class="role">{{.Role}}</div>{{end}}
         {{if .Description}}<div class="desc">{{.Description}}</div>{{end}}
         {{if .Credits}}<div class="credits">{{.Credits}}</div>{{end}}
@@ -685,9 +680,11 @@ const publicHTML = `<!DOCTYPE html>
         {{if .Images}}
         {{$title := .Title}}
         <div class="imgs lb-gallery" data-title="{{$title}}">
-          {{range $i, $u := .Images}}<img src="{{$u}}" data-i="{{$i}}" loading="lazy" alt="{{$title}}">{{end}}
+          {{range $i, $u := .Images}}<img src="{{$u}}" data-i="{{$i}}" alt="{{$title}}">{{end}}
         </div>
         {{end}}
+        <h3 class="work-title">{{.Title}}</h3>
+        {{if .Year}}<div class="year">{{.Year}}</div>{{end}}
       </article>
       {{end}}
     </div>
