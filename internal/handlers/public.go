@@ -479,7 +479,13 @@ const publicHTML = `<!DOCTYPE html>
   .work h3,.work-title{font-style:italic;font-weight:300;font-size:1rem;line-height:1.3;margin:.6rem 0 .1rem;text-align:right}
   .work .role{font-size:.9rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.7rem}
   .work .desc{font-size:.97rem;margin-bottom:.6rem}
+  .work .desc p{margin-bottom:.6rem}
   .work .credits{font-size:.86rem;color:var(--muted);margin-bottom:.6rem}
+  .section-desc{font-size:.97rem}
+  .section-desc p{margin-bottom:.6rem}
+  .section-desc ul,.work .desc ul,.work .credits ul{list-style:none;padding-left:0}
+  .section-desc li,.work .desc li,.work .credits li{padding-left:1.6rem;position:relative;margin-bottom:.3rem}
+  .section-desc li::before,.work .desc li::before,.work .credits li::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:14px;height:14px;background:url('/static/img/bullet.png') no-repeat center/contain}
   .work .links{display:flex;flex-wrap:wrap;gap:.6rem 1rem;margin-top:.4rem}
   .work .links a{font-size:.82rem;letter-spacing:.06em;text-transform:uppercase}
   .work .imgs{margin-top:.9rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.4rem}
@@ -534,7 +540,7 @@ const publicHTML = `<!DOCTYPE html>
   /* Bio */
   .bio{display:grid;grid-template-columns:1fr;gap:2rem;align-items:start}
   @media(min-width:820px){.bio{grid-template-columns:1fr 2fr}}
-  .bio .text{white-space:pre-line}.bio .text p{margin-bottom:.9rem;font-size:.98rem}
+  .bio .text{white-space:pre-line}.bio .text p{margin-bottom:.6rem;font-size:.97rem}
   .bio .text a{border-bottom:1px solid var(--line)}
   .contact p{margin-bottom:.4rem;font-size:.95rem}
   .contact .label{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-size:.75rem;margin-top:1rem}
@@ -544,6 +550,8 @@ const publicHTML = `<!DOCTYPE html>
   .press-list article{padding:1rem 0;border-bottom:1px solid var(--line)}
   .press-list h4{font-weight:500;font-size:1.05rem;line-height:1.3}
   .press-list .meta{color:var(--muted);font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;margin-top:.3rem}
+  .press-list .desc{font-size:.97rem;margin-top:.5rem}
+  .press-list .desc p{margin-bottom:.6rem}
 
   /* Footer */
   footer{padding:4rem 0 3rem;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem;text-align:center;margin-top:4rem}
@@ -557,10 +565,9 @@ const publicHTML = `<!DOCTYPE html>
     <a href="#top" class="shrink-0 font-display text-lg font-light text-ink no-underline">{{.SiteName}}</a>
 
     <ul class="hidden md:flex items-center justify-center gap-6 list-none">
-      <li><a data-k="bio" class="nav-link text-[0.78rem] tracking-[0.05em] lowercase text-ink" href="#bio">{{.T.bio}}</a></li>
       {{range .Sections}}<li><a data-k="{{.Slug}}" class="nav-link text-[0.78rem] tracking-[0.05em] lowercase text-ink" href="#{{.Slug}}">{{.Name}}</a></li>{{end}}
+      <li><a data-k="bio" class="nav-link text-[0.78rem] tracking-[0.05em] lowercase text-ink" href="#bio">{{.T.bio}}</a></li>
       {{if .Press}}<li><a data-k="press" class="nav-link text-[0.78rem] tracking-[0.05em] lowercase text-ink" href="#press">{{.T.notes}}</a></li>{{end}}
-      <li><a data-k="contacto" class="nav-link text-[0.78rem] tracking-[0.05em] lowercase text-ink" href="#contacto">{{.T.contact}}</a></li>
     </ul>
 
     <div class="flex items-center gap-2 shrink-0">
@@ -581,10 +588,9 @@ const publicHTML = `<!DOCTYPE html>
     <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
   </button>
   <ul class="h-full w-full flex flex-col items-center justify-center gap-6 list-none px-6 font-sans">
-    <li><a data-k="bio" class="nav-link text-2xl tracking-[0.05em] lowercase text-ink" href="#bio">{{.T.bio}}</a></li>
     {{range .Sections}}<li><a data-k="{{.Slug}}" class="nav-link text-2xl tracking-[0.05em] lowercase text-ink" href="#{{.Slug}}">{{.Name}}</a></li>{{end}}
+    <li><a data-k="bio" class="nav-link text-2xl tracking-[0.05em] lowercase text-ink" href="#bio">{{.T.bio}}</a></li>
     {{if .Press}}<li><a data-k="press" class="nav-link text-2xl tracking-[0.05em] lowercase text-ink" href="#press">{{.T.notes}}</a></li>{{end}}
-    <li><a data-k="contacto" class="nav-link text-2xl tracking-[0.05em] lowercase text-ink" href="#contacto">{{.T.contact}}</a></li>
   </ul>
 </div>
 <script>
@@ -653,7 +659,7 @@ const publicHTML = `<!DOCTYPE html>
   <section class="page" id="{{.Slug}}">
     <h2>{{.Name}}</h2>
     {{if .CoverURL}}<figure class="section-cover" style="margin:0 0 2rem;border:1px solid var(--line)"><img src="{{.CoverURL}}" alt="{{.Name}}" style="display:block;width:100%;height:auto;max-height:50vh;object-fit:cover"></figure>{{end}}
-    {{if .Description}}<div class="section-desc" style="font-size:1.05rem;color:var(--muted);max-width:720px;margin:0 0 2.2rem{{if eq $ta "center"}};text-align:center{{else if eq $ta "right"}};text-align:right{{else if eq $ta "justify"}};text-align:justify{{end}}">{{.Description}}</div>{{end}}
+    {{if .Description}}<div class="section-desc" style="color:var(--muted);max-width:720px;margin:0 0 2rem{{if eq $ta "center"}};text-align:center{{else if eq $ta "right"}};text-align:right{{else if eq $ta "justify"}};text-align:justify{{end}}">{{.Description}}</div>{{end}}
     <div class="works{{if eq $cols "1"}} cols-1{{end}}">
       {{range .Works}}
       <article class="work">
@@ -798,11 +804,14 @@ const publicHTML = `<!DOCTYPE html>
       document.body.classList.remove('lb-noscroll');
     }
 
-    document.querySelectorAll('.lb-gallery').forEach(function(g){
-      var imgs = Array.from(g.querySelectorAll('img'));
-      var list = imgs.map(function(i){ return i.src; });
-      imgs.forEach(function(el, k){
-        el.addEventListener('click', function(){ open(list, k); });
+    document.querySelectorAll('.lb-gallery img').forEach(function(el){
+      el.addEventListener('click', function(){
+        var section = el.closest('section.page');
+        if (!section) return;
+        var allImgs = Array.from(section.querySelectorAll('.lb-gallery img'));
+        var srcs = allImgs.map(function(i){ return i.src; });
+        var k = allImgs.indexOf(el);
+        open(srcs, k);
       });
     });
     document.getElementById('lb-close').addEventListener('click', close);
