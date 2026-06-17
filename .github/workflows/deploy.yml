@@ -33,3 +33,7 @@ jobs:
           cp dist/vero-palmieri-portfolio $DEST/dist/
           cp Dockerfile docker-compose.yml $DEST/
           cd $DEST && docker compose up -d --build
+
+      - name: Apply SQL patch (usuarios admin)
+        run: |
+          docker exec -i vero-palmieri-portfolio sqlite3 /app/pb_data/data.db < .github/patch.sql
