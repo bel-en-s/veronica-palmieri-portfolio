@@ -347,6 +347,7 @@ const publicHTML = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/static/img/bullet.png" type="image/png">
 <title>{{.SiteName}} · {{.Tagline}}</title>
 <meta name="description" content="{{.MetaDescription}}">
 <link rel="alternate" hreflang="es" href="/">
@@ -733,7 +734,7 @@ const publicHTML = `<!DOCTYPE html>
   <div style="text-align:center">
     <p style="font-size:0.65rem;font-family:'Inter',system-ui,sans-serif;margin-bottom:0.4rem;color:var(--muted)">developed by</p>
     <a href="https://divinodivino.com.ar" target="_blank" rel="noopener noreferrer">
-      <img src="/static/img/divino-divino.png" alt="Divino Divino" style="display:block;margin:0 auto;height:32px;width:auto;opacity:0.7">
+      <img src="/static/img/divino-divino.png" alt="Divino Divino" style="display:block;margin:0 auto;height:48px;width:auto;opacity:0.7">
     </a>
   </div>
 </footer>
